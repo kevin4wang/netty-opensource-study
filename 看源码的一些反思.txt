@@ -1,0 +1,41 @@
+###看源码的一些必要条件：
+1要看源码就必须基于熟练使用这个框架以后才能对其深究。
+2必须熟悉多线程
+###从网上看到netty的一些面试问题（大部分问题来源于视频，另一部分来源于网络或者自己觉得重要的地方）：
+
+netty处理新连接流程
+通过bossgroup 轮训出新的连接之后，基于java nio 创建NioSocketChannel，然后给NioSocketChannel 分配NioEventLoop和注册selector，最后向selector注册读事件
+
+新连接接入入口：NioEventLoop.processSelectedKey
+创建NioSocketChannel入口：NioServerSocketChannel.doReadMessages
+netty 中channel的分类：
+NioServerSocketChannel：注册的事件为SelectionKey.OP_ACCEPT,NioMessageUnsafe:读一条新的连接。NioServerSocketChannelConfig
+NioSocketChannel：注册的事件为SelectionKey.OP_READ，NioByteUnsafe:读取io数据。NioSocketChannelConfig
+给NioSocketChannel分配NioEventLoop线程和selector的注册入口：AbstractNioMessageChannel.read[pipeline.fireChannelRead]这里的fireChannelRead
+的事件传播到ServerBootstrapAcceptor.channelRead
+
+
+=======================================
+1netty是在哪里检测到有新连接接入的
+根据SelectedKey调用NioEventLoop.processSelectedKey，然后把新连接封装成NioSocketChannel，每次进来的新连接最多读到16个。
+2新连接是怎样注册到nioeventloop线程的
+3netty创建服务端的channel使用的是反射，而客户端channel通过 new  NioSocketChannel来创建。
+
+分析这套源码总结就是我们要先找到分析这个框架的入口，如果入口都没找到，只是从网上找了一些不知道版本的源码分析文章进行学习那就是耍流氓，找到入口，结合官网给出的信息（比如架构图，运行机制etc），我们就能对
+框架进行抽丝剥茧式的分析学习，那么网上或者其他前辈发布的视频就能很好的阐述验证自己的观点。
+总之，学习框架不仅收获设计模式，新技术，遇到框架问题能快速定位问题、还能让自己在开发自己的中间件或者公共组件中用到。学习的过程就是从认知到熟悉再到能力的转化。有些人总是说面试
+造火箭，工作拧螺丝，那如果面试造火箭，工作造火箭，那么你造出来的火箭是啥样的，请告诉我一下？以前总认为面试是脱离工作内容的，但是如果真的要想在软件方面有建树，那么知道火箭是怎么造的
+是必不可少的。只有通过不断的学习好的开源框架，集众家之所长才能造出比以前更好的火箭。
+
+分析框架有没有价值？
+这个问题我也想了很久，因为现在的技术一日千里，今天出了这个框架，明天出了那个框架，我们总是死命的去学，感觉分析某个框架源码已经属于浪费时间的事了，并且这个框架还在不断的扩充知识，不断的重构
+以前的代码，我们分析过的代码就感觉是jvm中朝生熄灭的eden区。不仅我认为这样，想必很多人都是这样。
+   其实不然，我们还是可以从其中学到很多的东西，比如netty对象池的异线程回收对象，方法链等等。一方面读源码分析源码是一个解密的过程，把框架的任务转为自己的任务，那么自己根据自己所学的知识去解决框架
+的任务，如果自己有想法，那就可以看看框架的代码是怎么实现的，人家怎样做到代码简洁，高内聚，低耦合，易扩展的。另一方面熟悉常用到的工具类，java高级类库知识。一个框架就像玩游戏一样，一开始游戏规则很
+简单，半天就能把这些规则玩得很熟，慢慢的游戏规则越来越多，最后随着游戏角色的等级提升，很多规则就会相互制约，相互依赖。如果你想把这个游戏玩好，那么你就必须去归纳总结，框架的演变过程也是如此。
+回到正题，分析框架有没有价值那相当于在问这个框架现在还有价值么？
+不同的框架解决不同的事，netty是一个偏底层的java nio 远程通讯框架。如今的微服务大行其道，远程调用必不可少，netty在这方面性能卓越，我认为如果深入分析微服务框架，或者分布式系统，远程调用是不可回避
+的问题。
+看框架要分框架类型来看，比如数据库中间件，mycat就是， jdbcshadding就是不同意义上的数据库中间件。
+
+分析这套源码是否有传播价值？

@@ -1,0 +1,54 @@
+/*
+ * Copyright 2014 The Netty Project
+ *
+ * The Netty Project licenses this file to you under the Apache License,
+ * version 2.0 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at:
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+
+package io.netty.channel;
+
+import io.netty.util.internal.StringUtil;
+
+/**
+ * A {@link ChannelFactory} that instantiates a new {@link Channel} by invoking its default constructor reflectively.
+ */
+public class ReflectiveChannelFactory<T extends Channel> implements ChannelFactory<T> {
+
+    private final Class<? extends T> clazz;
+
+    public ReflectiveChannelFactory(Class<? extends T> clazz) {
+        if (clazz == null) {
+            throw new NullPointerException("clazz");
+        }
+        this.clazz = clazz;
+    }
+
+    @Override
+    public T newChannel() {
+        try {
+            /**
+             *  这里的 clazz 为用户自己创建Bootstrap时给channel传入的指定的类（一般都是NioServerSocketChannel），{@link io.netty.bootstrap.AbstractBootstrap}
+             *  中的channel方法就对clazz进行赋值。
+             *  当clazz为NioServerSocketChannel类时，clazz.newInstance()就是通过反射获取NioServerSocketChannel的实例，反射创建实例是通过调用NioServerSocketChannel
+             * 构造函数，那么我们就看看NioServerSocketChannel构造函数做了哪些事{@link io.netty.channel.socket.nio.NioServerSocketChannel}
+             */
+            return clazz.newInstance();
+        } catch (Throwable t) {
+            throw new ChannelException("Unable to create Channel from class " + clazz, t);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return StringUtil.simpleClassName(clazz) + ".class";
+    }
+}
